@@ -7,6 +7,14 @@ verify_ssl = true
 
 [packages]
 django = "*"
+djangorestframework = "*"
+django-allauth = "*"
+django-rest-auth = "*"
+djangorestframework-jwt = "*"
+psycopg2-binary = "*"
+celery = "*"
+pillow = "*"
+python-dateutil = "*"
 
 [requires]
 python_version = "3.7"

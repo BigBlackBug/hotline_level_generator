@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+  server:
+    build: .
+    command: python /code/manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+  db:
+    environment:
+      - POSTGRES_UESRNAME=postgres
+      - POSTGRES_PASSWORD=postgres
+    image: postgres:11
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  rabbit_mq:
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_VHOST=myvhost
+    image: rabbitmq
+    ports:
+      - 5672:5672
+  worker:
+    build: .
+    command: celery -A hotline worker -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - rabbit_mq
+volumes:
+  postgres_data:
