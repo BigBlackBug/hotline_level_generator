@@ -1,3 +1,21 @@
+from django.contrib.auth.models import AbstractBaseUser, AbstractUser
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
-# Create your models here.
+from .managers import CustomUserManager
+
+
+class HotlineUser(AbstractUser):
+    username = None
+    first_name = None
+    last_name = None
+    date_joined = None
+    email = models.EmailField(_('email address'), unique=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
+
+    def __str__(self):
+        return self.email
