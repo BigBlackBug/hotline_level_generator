@@ -11,6 +11,7 @@ djangorestframework = "*"
 django-allauth = "*"
 django-rest-auth = "*"
 djangorestframework-jwt = "*"
+psycopg2-binary = "*"
 
 [requires]
 python_version = "3.7"
