@@ -12,5 +12,6 @@ COPY Pipfile /code/
 RUN pip install pipenv
 RUN pipenv lock && pipenv install --system
 
+# Copying is disabled so that live updates can work
 # Copy project
 #COPY . /code/
