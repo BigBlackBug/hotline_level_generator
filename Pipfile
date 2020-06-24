@@ -13,6 +13,7 @@ django-rest-auth = "*"
 djangorestframework-jwt = "*"
 psycopg2-binary = "*"
 celery = "*"
+coverage = "*"
 
 [requires]
 python_version = "3.7"

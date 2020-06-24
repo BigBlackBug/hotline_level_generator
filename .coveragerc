@@ -1,0 +1,9 @@
+[run]
+source = .
+branch = True
+omit = /Users/bigblackbug/.local/share/virtualenvs/hotline-PE4YKmZa/*
+
+[report]
+fail_under = 90
+show_missing = True
+skip_covered = True
