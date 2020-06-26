@@ -19,3 +19,20 @@ class HotlineUser(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class Level(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+
+    # TODO make it a jsonfield
+    level_config = models.TextField(max_length=1024, default="")
+    name = models.CharField(max_length=64)
+    created_on = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='images', blank=True)
+    is_public = models.BooleanField(default=False)
+    creator = models.ForeignKey(HotlineUser, on_delete=models.CASCADE,
+                                related_name='levels',
+                                related_query_name='level')

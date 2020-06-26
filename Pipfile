@@ -14,6 +14,8 @@ djangorestframework-jwt = "*"
 psycopg2-binary = "*"
 celery = "*"
 coverage = "*"
+pillow = "*"
+python-dateutil = "*"
 
 [requires]
 python_version = "3.7"
