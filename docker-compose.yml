@@ -2,12 +2,8 @@ version: '3.7'
 services:
   server:
     build: .
-    environment:
-      - DJANGO_DEBUG=${DJANGO_DEBUG}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DB_HOST=${DB_HOST}
+    env_file:
+      - ${HOTLINE_ENV?env is not set}.env
     command: python /code/manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
@@ -16,32 +12,28 @@ services:
     depends_on:
       - db
   db:
-    environment:
-      - POSTGRES_UESRNAME=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
+    env_file:
+      - ${HOTLINE_ENV?env is not set}.env
     image: postgres:11
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+
   rabbit_mq:
-    environment:
-      - RABBITMQ_DEFAULT_USER=user
-      - RABBITMQ_DEFAULT_PASS=password
-      - RABBITMQ_DEFAULT_VHOST=myvhost
+    env_file:
+      - ${HOTLINE_ENV?env is not set}.env
     image: rabbitmq
     ports:
       - 5672:5672
+
   worker:
     build: .
-    environment:
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DB_HOST=${DB_HOST}
-      - DJANGO_DEBUG=${DJANGO_DEBUG}
+    env_file:
+      - ${HOTLINE_ENV?env is not set}.env
     command: celery -A hotline worker -l info
     volumes:
       - .:/code
     depends_on:
       - rabbit_mq
+
 volumes:
   postgres_data:

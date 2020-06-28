@@ -22,7 +22,7 @@ def make_image(level_config: LevelConfig, rooms: List[Room]):
     _draw_mesh(idraw, img.width, img.height)
     for room in rooms:
         _draw_room(room, idraw)
-    img.save('rectangle.png')
+    return img
 
 
 def _draw_room(room, idraw):

@@ -16,6 +16,7 @@ celery = "*"
 coverage = "*"
 pillow = "*"
 python-dateutil = "*"
+mock = "*"
 
 [requires]
 python_version = "3.7"
