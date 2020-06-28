@@ -3,7 +3,7 @@ services:
   server:
     build: .
     env_file:
-      - ${HOTLINE_ENV?env is not set}.env
+      - ${HOTLINE_ENV?env is not set}
     command: python /code/manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
@@ -13,14 +13,14 @@ services:
       - db
   db:
     env_file:
-      - ${HOTLINE_ENV?env is not set}.env
+      - ${HOTLINE_ENV?env is not set}
     image: postgres:11
     volumes:
       - postgres_data:/var/lib/postgresql/data/
 
   rabbit_mq:
     env_file:
-      - ${HOTLINE_ENV?env is not set}.env
+      - ${HOTLINE_ENV?env is not set}
     image: rabbitmq
     ports:
       - 5672:5672
@@ -28,7 +28,7 @@ services:
   worker:
     build: .
     env_file:
-      - ${HOTLINE_ENV?env is not set}.env
+      - ${HOTLINE_ENV?env is not set}
     command: celery -A hotline worker -l info
     volumes:
       - .:/code
