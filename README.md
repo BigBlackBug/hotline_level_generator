@@ -1,0 +1,17 @@
+## startup
+example: <br>
+`SERVER_PORT=8080 HOTLINE_ENV=local.env docker-compose up --build -d`
+
+Required ENVs
+* `HOTLINE_ENV` - name of the .env file which must contain the following variables
+    * DB_USER
+    * DB_PASS
+    * DB_NAME
+    * DB_HOST=db - *name of the postgres service in docker-compose.yml*
+    * DJANGO_DEBUG= *True or False*
+    * RABBITMQ_HOST=rabbit_mq - *name of the rabbitmq service in docker-compose.yml*
+    * RABBITMQ_DEFAULT_USER
+    * RABBITMQ_DEFAULT_PASS
+    * RABBITMQ_DEFAULT_VHOST
+
+* `SERVER_PORT` - port to expose for connections
