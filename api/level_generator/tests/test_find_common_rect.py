@@ -29,10 +29,6 @@ class TestFindCommonRect(TestCase):
         result = find_common_rect(bounds_one, bounds_two)
         self.assertIsNone(result)
 
-    # TODO more tests
-    def test_find_common_side_intersects_lt(self):
-        raise NotImplementedError("Not implemented")
-
     def test_find_common_side_intersects_rt(self):
         bounds_one = Rect(Line((1, 2), (4, 2)), Line((4, 2), (4, 5)),
                           Line((1, 5), (4, 5)), Line((1, 2), (1, 5)))
@@ -43,8 +39,12 @@ class TestFindCommonRect(TestCase):
                            Line((3, 3), (4, 3)), Line((3, 2), (3, 3)))
         self.assertEquals(result, common_rect)
 
-    def test_find_common_side_intersects_rb(self):
-        raise NotImplementedError("Not implemented")
+    # # TODO more tests
+    # def test_find_common_side_intersects_lt(self):
+    #     raise NotImplementedError("Not implemented")
 
-    def test_find_common_side_intersects_lb(self):
-        raise NotImplementedError("Not implemented")
+    # def test_find_common_side_intersects_rb(self):
+    #     raise NotImplementedError("Not implemented")
+    #
+    # def test_find_common_side_intersects_lb(self):
+    #     raise NotImplementedError("Not implemented")
