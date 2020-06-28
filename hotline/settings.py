@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import sys
+
+from . import get_env, EnvType
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -22,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '$kl-e791ob*k0qpth)wk-j+-l5thc8h^-thm1tkq8$zp)3vpgp'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = get_env("DJANGO_DEBUG", env_type=EnvType.BOOL)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -83,10 +87,14 @@ WSGI_APPLICATION = 'hotline.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': get_env('DB_NAME'),
+        'USER': get_env('DB_USER'),
+        'PASSWORD': get_env('DB_PASS'),
+        'HOST': get_env('DB_HOST'),
+        'PORT': '5432',
+        'ATOMIC_REQUESTS': True,
+    }}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators

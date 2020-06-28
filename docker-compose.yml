@@ -2,17 +2,23 @@ version: '3.7'
 services:
   server:
     build: .
+    environment:
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_HOST=${DB_HOST}
     command: python /code/manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
     ports:
-      - 8000:8000
+      - ${SERVER_PORT}:8000
     depends_on:
       - db
   db:
     environment:
-      - POSTGRES_UESRNAME=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_UESRNAME=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
     image: postgres:11
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -26,6 +32,12 @@ services:
       - 5672:5672
   worker:
     build: .
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_HOST=${DB_HOST}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
     command: celery -A hotline worker -l info
     volumes:
       - .:/code
