@@ -1,4 +1,9 @@
+from io import BytesIO
+
+from PIL.Image import Image
 from django.contrib.auth.models import AbstractBaseUser, AbstractUser
+from django.contrib.postgres.fields import JSONField
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -28,7 +33,7 @@ class Level(models.Model):
         ]
 
     # TODO make it a jsonfield
-    level_config = models.TextField(max_length=1024, default="")
+    level_config = JSONField(max_length=1024, blank=True, null=True)
     name = models.CharField(max_length=64)
     created_on = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='images', blank=True)
@@ -36,3 +41,11 @@ class Level(models.Model):
     creator = models.ForeignKey(HotlineUser, on_delete=models.CASCADE,
                                 related_name='levels',
                                 related_query_name='level')
+
+    def add_image(self, image: Image):
+        image_file = BytesIO()
+        image.save(image_file, 'png')
+        self.image.save(
+            f"{self.name}_level",
+            ContentFile(image_file.getvalue())
+        )

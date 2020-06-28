@@ -1,12 +1,13 @@
 from datetime import datetime
 
+from PIL import Image
 from django.conf import settings
 from django.test import TestCase
+from mock import MagicMock
 
-from api.models import HotlineUser, Level
+from api.models import Level
 from api.serializers import LevelSerializer
 from api.tests import common
-from hotline import utils
 
 
 class TestLevelSerializer(TestCase):
@@ -18,7 +19,7 @@ class TestLevelSerializer(TestCase):
         cls.level = Level.objects.create(name='level_one',
                                          creator=cls.default_user)
         cls.level_data = {
-            'level_config': '',
+            'level_config': None,
             'name': 'level_one',
             'created_on': datetime.strftime(cls.level.created_on,
                                             settings.DATETIME_FORMAT),
@@ -36,18 +37,29 @@ class TestLevelSerializer(TestCase):
 
     def test_serialize_create_level(self):
         serializer = LevelSerializer(data={
-            "level_config": "test_config",
+            "level_config": None,
             "name": "level_one",
             "is_public": True
         })
 
-        class Mock:
-            pass
-
-        mock = Mock()
-        setattr(mock, 'user', self.default_user)
-
-        serializer.context['request'] = mock
-        serializer.is_valid()
+        serializer.context['request'] = MagicMock(user=self.default_user)
+        serializer.is_valid(raise_exception=True)
         new_level = serializer.save()
-        self.assertEquals(new_level.level_config, "test_config")
+        self.assertEquals(new_level.name, "level_one")
+
+
+class TestLevelModel(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.default_user = common.create_user()
+
+        cls.level = Level.objects.create(name='level_one',
+                                         creator=cls.default_user)
+
+    def test_save_image(self):
+        self.assertFalse(self.level.image)
+        image = Image.new('RGBA', (250, 250), 'blue')
+        self.level.add_image(image)
+        saved_image = self.level.image
+        self.assertTrue(saved_image.name)

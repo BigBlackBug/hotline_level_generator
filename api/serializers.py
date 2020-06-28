@@ -9,6 +9,7 @@ class LevelSerializer(serializers.ModelSerializer):
                                            read_only=True)
     image = serializers.ImageField(read_only=True)
     creator = serializers.PrimaryKeyRelatedField(many=False, read_only=True)
+    level_config = serializers.JSONField(required=False, allow_null=True)
 
     def create(self, validated_data):
         """

@@ -1,6 +1,5 @@
 import http
 
-# Create your views here.
 from rest_framework import views, generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -8,6 +7,7 @@ from rest_framework.response import Response
 
 from api.models import Level, HotlineUser
 from api.serializers import LevelSerializer, UserSerializer
+from api.tasks import generate_level_preview
 from hotline.utils import extra_permissions
 
 
@@ -19,6 +19,7 @@ class EmailVerifiedView(views.APIView):
         return Response(status=http.HTTPStatus.OK, data={
             "status": "verified"
         })
+
 
 class GetUserDetailView(generics.RetrieveAPIView):
     view_name = 'get-user-detail'
@@ -45,3 +46,9 @@ class GetLevelsView(generics.ListCreateAPIView):
     @extra_permissions(IsAuthenticated, )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        # running the image preview generator
+        generate_level_preview.delay(instance.id,
+                                     instance.level_config)
