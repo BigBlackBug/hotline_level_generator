@@ -27,6 +27,8 @@ class HotlineUser(AbstractUser):
 
 
 class Level(models.Model):
+    _DEFAULT_IMAGE_FORMAT = 'png'
+
     class Meta:
         indexes = [
             models.Index(fields=['name']),
@@ -44,8 +46,8 @@ class Level(models.Model):
 
     def add_image(self, image: Image):
         image_file = BytesIO()
-        image.save(image_file, 'png')
+        image.save(image_file, self._DEFAULT_IMAGE_FORMAT)
         self.image.save(
-            f"{self.name}_level",
+            f"{self.name}_level.{self._DEFAULT_IMAGE_FORMAT}",
             ContentFile(image_file.getvalue())
         )
