@@ -1,3 +1,9 @@
+## A simple backend service that can generate and store 2D levels for Hotline Miami 2 <br>
+As of `v0.1` it:
+* can create a room graph and an image preview
+* can authenticate users (super basic token auth, nothing fancy atm)
+* provides an api for creating and viewing levels
+
 ## startup
 example: <br>
 `SERVER_PORT=8080 HOTLINE_ENV=local.env docker-compose up --build -d`
@@ -14,4 +20,5 @@ Required ENVs
     * RABBITMQ_DEFAULT_PASS
     * RABBITMQ_DEFAULT_VHOST
 
-* `SERVER_PORT` - port to expose for connections
+Or use `template.env`
+* `SERVER_PORT` - web server port to expose

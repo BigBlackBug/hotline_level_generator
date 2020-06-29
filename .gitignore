@@ -145,3 +145,4 @@ cython_debug/
 media/
 
 *.env
+!template.env
