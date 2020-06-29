@@ -195,3 +195,12 @@ LOGGING = {
         }
     }
 }
+
+# TODO in production might have to replace it with RMQ or any
+# other cache backend
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'local_cache',
+    }
+}
