@@ -2,7 +2,6 @@ import mock
 from PIL import Image
 from django.test import TestCase
 
-from api.level_generator.generator import HotlineGenerator
 from api.models import Level
 from api.tasks import generate_level_preview
 from api.tests import common
@@ -19,11 +18,11 @@ class TestCeleryTasks(TestCase):
                                          creator=cls.default_user)
 
     @mock.patch('api.tasks.image_generator')
-    @mock.patch.object(HotlineGenerator, 'generate')
+    @mock.patch('api.tasks.generator')
     def test_generate_preview(self, mock_generator, mock_image_generator):
         generate = get_raw_celery_task(generate_level_preview)
 
-        mock_generator.return_value = []
+        mock_generator.generate.return_value = []
         new_image = Image.new('RGBA', (100, 100))
         mock_image_generator.make_image.return_value = new_image
 

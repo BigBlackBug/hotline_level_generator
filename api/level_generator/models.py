@@ -1,13 +1,20 @@
 from __future__ import annotations
 
-from collections import namedtuple
+from dataclasses import dataclass
 
 from .geomerty import Rect, Line, find_common_rect
 
-LevelConfig = namedtuple(
-    'LevelConfig', field_names=[
-        'room_number', 'max_width', 'max_height'
-    ])
+
+# LevelConfig = namedtuple(
+#     'LevelConfig', field_names=[
+#         'room_number', 'max_width', 'max_height'
+#     ])
+
+@dataclass
+class LevelConfig:
+    room_number: int
+    max_width: int
+    max_height: int
 
 
 class Room:
@@ -21,20 +28,20 @@ class Room:
             Wall(self, bounds.left)
         ]
 
-    def underlap_room(self, new_room):
-        # if rect side is part of the upper room wall
-        # break this wall into pieces, all of them are now walls
-
-        # if the rect side is part of the bottom room wall
-        # break that wall into pieces,
-        # every piece is a wall except the one that's same with rect_side
-        #
+    def underlap_room(self, new_room: Room):
+        """
+        Rebuilds walls of this room and the new_room as if
+        new_room was placed under new_room
+        :param new_room: room to be placed under
+        """
         common_rect = find_common_rect(self.bounds, new_room.bounds)
         used_sides = set()
         for rect_side in common_rect.sides:
             # upper section
             upper_room_walls = list(self.walls)
             for wall in upper_room_walls:
+                # if rect side is part of the upper room wall
+                # break this wall into pieces and make them new walls
                 split = wall.line.split_via(rect_side)
                 if len(split) > 1:
                     # build new walls for the target_room
@@ -45,16 +52,17 @@ class Room:
 
             lower_room_walls = list(new_room.walls)
             for wall in lower_room_walls:
+                # if the rect side is part of the bottom room wall
+                # break that wall into pieces and make them walls
+                # except the ones that have same dimensions with rect_side
                 split = wall.line.split_via(rect_side)
                 if len(split) > 1:
                     # build new walls for the target_room
-                    new_room.walls.remove(wall)
                     new_room.walls.extend((
                         Wall(new_room, wall_piece) for wall_piece in split
                         if wall_piece != rect_side
                     ))
-                    used_sides.add(rect_side)
-                elif len(split) == 1:
+                if len(split) >= 1:
                     new_room.walls.remove(wall)
                     used_sides.add(rect_side)
 
@@ -80,7 +88,6 @@ class Room:
 
 
 class Wall:
-    # eq by room id and lines
     def __init__(self, room: Room, line: Line,
                  thickness: int = 0):
         self._line = Line(line.start, line.end)
