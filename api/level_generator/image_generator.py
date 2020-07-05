@@ -2,9 +2,9 @@ from typing import List
 
 from PIL import Image, ImageDraw
 
-from api.level_generator.models import LevelConfig, Room
+from api.level_generator.models import Room, Map
 
-TILE_SIZE_PX = 1
+TILE_SIZE_PX = 10
 
 
 def _draw_mesh(idraw, width, height):
@@ -14,9 +14,9 @@ def _draw_mesh(idraw, width, height):
         idraw.line((0, y, width, y), fill='green')
 
 
-def make_image(level_config: LevelConfig, rooms: List[Room]):
-    img = Image.new('RGBA', (level_config.max_width * TILE_SIZE_PX,
-                             level_config.max_height * TILE_SIZE_PX),
+def make_image(map: Map, rooms: List[Room]):
+    img = Image.new('RGBA', (map.width * TILE_SIZE_PX,
+                             map.height * TILE_SIZE_PX),
                     'blue')
     idraw = ImageDraw.Draw(img)
     _draw_mesh(idraw, img.width, img.height)
@@ -27,23 +27,16 @@ def make_image(level_config: LevelConfig, rooms: List[Room]):
 
 def _draw_room(room, idraw):
     for wall in room.walls:
-        fill = 'red' if wall.shared_wall else 'white'
-        _draw_wall(wall.line, idraw, fill=fill)
+        fill = 'red' if wall.potential_door else 'white'
+        print(f"wall {wall.tile.x, wall.tile.y}")
+        _draw_tile(wall.tile, idraw, fill=fill)
 
 
-def _draw_wall(line, idraw, fill):
+def _draw_tile(tile, idraw, fill):
     # for
-    if line.is_horizontal:
-        idraw.rectangle((line.start[0] * TILE_SIZE_PX,
-                         line.start[1] * TILE_SIZE_PX,
-                         (line.end[0]+1) * TILE_SIZE_PX,
-                         line.end[1] + TILE_SIZE_PX),
-                        fill=fill, outline=None)
-    elif line.is_vertical:
-        idraw.rectangle((line.start[0] * TILE_SIZE_PX,
-                         line.start[1] * TILE_SIZE_PX,
-                         line.end[0] + TILE_SIZE_PX,
-                         (line.end[1]+1) * TILE_SIZE_PX),
-                        fill=fill, outline=None)
-    # idraw.line((line.start[0], line.start[1], line.end[0],
-    #             line.end[1]), fill=fill)
+    dimensions = [tile.x * TILE_SIZE_PX,
+                  tile.y * TILE_SIZE_PX,
+                  (tile.x + 1) * TILE_SIZE_PX,
+                  (tile.y + 1) * TILE_SIZE_PX]
+    # print(f'rect {dimensions}')
+    idraw.rectangle(dimensions, outline=fill)

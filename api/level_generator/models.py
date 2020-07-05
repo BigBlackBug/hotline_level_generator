@@ -1,114 +1,130 @@
-from __future__ import annotations
-
-from dataclasses import dataclass
-
-from .geomerty import Rect, Line, find_common_rect
-
-
-# LevelConfig = namedtuple(
-#     'LevelConfig', field_names=[
-#         'room_number', 'max_width', 'max_height'
-#     ])
-
-@dataclass
-class LevelConfig:
-    room_number: int
-    max_width: int
-    max_height: int
-
-
-class Room:
-    def __init__(self, bounds: Rect):
-        # bounds remain the same
-        self.bounds = bounds
-        self.walls = [
-            Wall(self, bounds.top),
-            Wall(self, bounds.right),
-            Wall(self, bounds.bottom),
-            Wall(self, bounds.left)
-        ]
-
-    def underlap_room(self, new_room: Room):
-        """
-        Rebuilds walls of this room and the new_room as if
-        new_room was placed under new_room
-        :param new_room: room to be placed under
-        """
-        common_rect = find_common_rect(self.bounds, new_room.bounds)
-        used_sides = set()
-        for rect_side in common_rect.sides:
-            # upper section
-            upper_room_walls = list(self.walls)
-            for wall in upper_room_walls:
-                # if rect side is part of the upper room wall
-                # break this wall into pieces and make them new walls
-                split = wall.line.split_via(rect_side)
-                if len(split) > 1:
-                    # build new walls for the target_room
-                    self.walls.remove(wall)
-                    self.walls.extend((
-                        Wall(self, wall_piece) for wall_piece in split
-                    ))
-
-            lower_room_walls = list(new_room.walls)
-            for wall in lower_room_walls:
-                # if the rect side is part of the bottom room wall
-                # break that wall into pieces and make them walls
-                # except the ones that have same dimensions with rect_side
-                split = wall.line.split_via(rect_side)
-                if len(split) > 1:
-                    # build new walls for the target_room
-                    new_room.walls.extend((
-                        Wall(new_room, wall_piece) for wall_piece in split
-                        if wall_piece != rect_side
-                    ))
-                if len(split) >= 1:
-                    new_room.walls.remove(wall)
-                    used_sides.add(rect_side)
-
-        for rect_side in common_rect.sides:
-            if rect_side not in used_sides:
-                new_room.walls.append(Wall(new_room, rect_side))
-
-    def connect(self, target_room: Room):
-        """
-        Goes through all of the walls of both rooms
-        and connects them to each other
-        :param target_room:
-        """
-        for my_wall in self.walls:
-            for other_wall in target_room.walls:
-                if my_wall.line == other_wall.line:
-                    my_wall.connect(other_wall)
-                    other_wall.connect(my_wall)
+class Tile:
+    def __init__(self, coords: tuple):
+        if len(coords) != 2:
+            raise ValueError("coords should be a tuple of size 2")
+        self.x, self.y = coords
+        self.wall = None
+        self.room = None
 
     def __str__(self):
-        return f"Room id={id(self)}, \n" \
-               f"{', '.join(map(str, self.walls))}"
+        return f"T({self.x}, {self.y}), wall({self.wall is not None}), " \
+               f"room({self.room is not None})"
 
-
-class Wall:
-    def __init__(self, room: Room, line: Line,
-                 thickness: int = 0):
-        self._line = Line(line.start, line.end)
-        # TODO thickness is not taken into account anywhere
-        self._thickness = thickness
-        self.shared_wall = None
-        self.room = room
+    def clear(self):
+        if self.wall:
+            self.wall.clear(self)
+            self.wall = None
+        if self.room:
+            self.room.drop_tile(self)
+            self.room = None
 
     def __eq__(self, other):
-        return self._line == other.line and \
-               id(self.room) == id(other.room)
+        return self.x == other.x and self.y == other.y
 
     def __hash__(self):
         return super().__hash__()
 
+    def lies_on_rect_bounds(self, origin, width, height):
+        x, y = origin
+        return (x <= self.x <= x + width - 1 and (
+                self.y == y or self.y == y + height - 1)) or \
+               (y <= self.y <= y + height - 1 and (
+                       self.x == x or self.x == x + width - 1))
+
+    def is_corner(self, origin, width, height):
+        x, y = origin
+        return self.x == x and self.y == y or \
+               self.x == x and self.y == y + height - 1 or \
+               self.x == x + width - 1 and self.y == y or \
+               self.x == x + width - 1 and self.y == y + height - 1
+
+
+class Wall:
+    def __init__(self, tile):
+        self._room_one = None
+        self._room_two = None
+        self.tile = tile
+        self.is_corner = False
+
+    def clear(self, tile):
+        if self.room_one:
+            self.room_one.drop_tile(tile)
+        if self.room_two:
+            self.room_two.drop_tile(tile)
+
     @property
-    def line(self) -> Line:
-        return self._line
+    def room_one(self):
+        return self._room_one
 
-    def connect(self, wall):
-        self.shared_wall = wall
+    @room_one.setter
+    def room_one(self, room):
+        if room:
+            room.walls.add(self)
+        self._room_one = room
 
-    def __str__(self):
-        return f"Wall {self._line}"
+    @property
+    def room_two(self):
+        return self._room_two
+
+    @room_two.setter
+    def room_two(self, room):
+        if room:
+            room.walls.add(self)
+        self._room_two = room
+
+    @property
+    def potential_door(self):
+        return self.room_one and self.room_two and not self.is_corner
+
+    def __eq__(self, other):
+        return id(self) == id(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
+
+class Room:
+    def __init__(self):
+        self.walls = set()
+        self.tiles = set()
+
+    def drop_tile(self, tile):
+        self.walls.discard(tile.wall)
+        self.tiles.discard(tile)
+
+    def add_tile(self, tile):
+        tile.room = self
+        self.tiles.add(tile)
+
+    def add_wall(self, tile, other_room=None, is_corner=False):
+        new_wall = Wall(tile)
+
+        new_wall.room_one = self
+        new_wall.room_two = other_room
+        new_wall.is_corner = is_corner
+
+        tile.wall = new_wall
+
+
+class Map:
+    def __init__(self, size):
+        self.width, self.height = size
+        map = []
+        for y in range(size[1]):
+            row = []
+            for x in range(size[0]):
+                row.append(Tile((y, x)))
+            map.append(row)
+        self.map = map
+
+    def get(self, x, y):
+        return self.map[x][y]
+
+    def next_tiles(self, start_x, start_y, width, height):
+        used_tiles = set()
+        for x in range(start_x, start_x + width):
+            for y in range(start_y, start_y + height):
+                tile = self.get(x, y)
+                if tile not in used_tiles:
+                    used_tiles.add(tile)
+                    yield tile
