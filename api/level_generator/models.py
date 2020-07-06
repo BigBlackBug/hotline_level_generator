@@ -1,3 +1,6 @@
+from api.level_generator.geometry import Rect
+
+
 class Tile:
     def __init__(self, coords: tuple):
         if len(coords) != 2:
@@ -84,9 +87,10 @@ class Wall:
 
 
 class Room:
-    def __init__(self):
+    def __init__(self, bounds: Rect):
         self.walls = set()
         self.tiles = set()
+        self.bounds = bounds
 
     def drop_tile(self, tile):
         self.walls.discard(tile.wall)

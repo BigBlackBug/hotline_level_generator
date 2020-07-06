@@ -1,5 +1,7 @@
 import random
 
+from api.level_generator import geometry
+from api.level_generator.geometry import Rect
 from api.level_generator.models import Room, Map
 
 _MAX_ATTEMPTS = 10
@@ -25,15 +27,16 @@ class Generator:
     def _make_first_room(self):
         x, y = int(self.map.width / 2), \
                int(self.map.height / 2)
-        width = random.randint(int(self.map.width / 12) + 1,
-                               int(self.map.width / 6) + 1)
-        height = random.randint(int(self.map.height / 12) + 1,
-                                int(self.map.height / 6) + 1)
+        width = random.randint(int(self.map.width / 8) + 1,
+                               int(self.map.width / 3) + 1)
+        height = random.randint(int(self.map.height / 8) + 1,
+                                int(self.map.height / 3) + 1)
         start_tile = self.map.get(x, y)
         return self._place_room_above(start_tile, width, height)
 
     def _place_room_above(self, start_tile, width, height):
-        new_room = Room()
+        new_room = Room(Rect.make_rect(
+            (start_tile.x, start_tile.y), width, height))
         for tile in self.map.next_tiles(
                 start_tile.x, start_tile.y, width, height):
             if tile.lies_on_rect_bounds(
@@ -53,10 +56,10 @@ class Generator:
     def _add_new_room(self, rooms: list):
         target_room = self._pick_room(rooms)
         # TODO a better random, this is temporary BS
-        width = random.randint(int(self.map.width / 12) + 1,
-                               int(self.map.width / 6) + 1)
-        height = random.randint(int(self.map.height / 12) + 1,
-                                int(self.map.height / 6) + 1)
+        width = random.randint(int(self.map.width / 8) + 1,
+                               int(self.map.width / 3) + 1)
+        height = random.randint(int(self.map.height / 8) + 1,
+                                int(self.map.height / 3) + 1)
         # create rooms that underlap with ONLY one other room
         other_rooms = list(rooms)
         other_rooms.remove(target_room)
@@ -82,5 +85,22 @@ class Generator:
         :return:
         """
         # TODO pick a tile
-        start_tile = None
-        return self._place_room_above(start_tile, width, height)
+        while True:
+            point = geometry.make_point_inside(target_room.bounds)
+
+            attempts = 0
+            while attempts < _MAX_ATTEMPTS:
+                corner = geometry.CornerEnum.random()
+                try:
+                    origin = geometry.transform_origin(
+                        point, width, height, corner)
+                    bounds = geometry.Rect.make_rect(origin, width, height)
+                except ValueError:
+                    # in case make_rect fails
+                    continue
+                else:
+                    if all(not geometry.find_common_rect(room.bounds, bounds)
+                           for room in other_rooms):
+                        start_tile = self.map.get(point[0], point[1])
+                        return self._place_room_above(start_tile, width, height)
+                attempts += 1
