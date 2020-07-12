@@ -7,6 +7,8 @@ from api.level_generator.geometry import CornerEnum, Rect
 from api.level_generator.models import Room, Map
 
 _MAX_ATTEMPTS = 10
+MIN_SQUARE_K = 0.003
+MAX_SQUARE_K = 0.05
 
 
 class Holder:
@@ -35,7 +37,6 @@ class Generator:
         self.corner_cache = defaultdict(Holder)
 
     # place_room_above
-    # recalculate corners on a new room
     # see if the room is split into disjoint rooms
     # validate disjoint rooms and make unique
     def generate(self, room_number):
@@ -46,13 +47,12 @@ class Generator:
         """
         first_room = self._make_first_room()
         print(f" first room bounds{first_room.bounds}")
-        # self.recalculate_potential_corners(first_room)
         rooms = [first_room]
         for _ in range(room_number - 1):
             room = self._add_new_room(rooms)
             rooms.append(room)
-            # for room in rooms:
-            #     self.recalculate_potential_corners(room)
+        # TODO check disjoint rooms
+        # TODO get rid of
         return rooms
 
     def _make_first_room(self):
@@ -95,35 +95,25 @@ class Generator:
         return random.choice(rooms)
 
     def _make_new_room(self, target_room):
-        """
-        Generates a new room that underlaps the target_room
-        and intersects with no other room from rooms
-
-        :param width:
-        :param height:
-        :param target_room:
-        :param other_rooms:
-        :param level_config:
-        :return:
-        """
         # TODO pick a tile
         attempts = 0
-        while attempts != 10:
-            start_tile = random.choice(list(target_room.tiles))
-            print(f"picked start_tile {start_tile.x},{start_tile.y}")
-            if not start_tile.has_neighboring_walls(self.map):
-                try:
-                    widths_left, widths_right = self.map.calculate_room_widths(
-                        start_tile,
-                        target_room)
-                    heights_top, heights_bottom = self.map.calculate_room_heights(
-                        start_tile,
-                        target_room)
+        while attempts != _MAX_ATTEMPTS:
+            try:
+                start_tile = random.choice(list(target_room.tiles))
+                print(f"picked start_tile {start_tile.x},{start_tile.y}")
+                if not start_tile.has_neighboring_walls(self.map):
+                    widths_left, widths_right = \
+                        self.map.calculate_room_widths(start_tile, target_room)
+                    heights_top, heights_bottom = \
+                        self.map.calculate_room_heights(start_tile, target_room)
                     corner = geometry.CornerEnum.random()
 
-                    width, height = self.get_wh(corner, widths_left,
-                                                widths_right, heights_top,
-                                                heights_bottom)
+                    min_square = MIN_SQUARE_K * self.map.square
+                    max_square = MAX_SQUARE_K * self.map.square
+                    width, height = self.pick_dimensions(
+                        corner, widths_left, widths_right,
+                        heights_top, heights_bottom,
+                        min_square=min_square, max_square=max_square)
                     print(f"got corner {corner}, w={width}, h={height}")
                     origin = geometry.transform_origin(
                         (start_tile.x, start_tile.y),
@@ -131,61 +121,30 @@ class Generator:
                     print(f"transforming origin to {origin}")
                     rect = Rect.make_rect(origin, width, height)
                     print(f"new room rect {rect}")
-                    attempts += 1
-                except Exception as e:
-                    raise e
-                else:
                     return self._place_room_above(rect)
-            print('failed to place a room')
-            return None
-        # corner = geometry.CornerEnum.random()
-        # print(f"selecting corner {corner}")
-        # # key = CornerKey(start_tile.x, start_tile.y, corner)
-        # key,holder = random.choice(list(self.corner_cache.items()))
-        # widths = holder.widths
-        # heights = holder.heights
-        #     # pick
-        # width, height = random.choice(widths), random.choice(heights)
-        # print(f"transforming {(key.x, key.y)}, w={width}, h={height}")
-        # origin = geometry.transform_origin((key.x, key.y),
-        #                                    width, height, corner)
-        # print(f"result {origin}, w={width}, h={height}")
-        # rect = Rect.make_rect(origin, width, height)
-        return self._place_room_above(rect)
+            except Exception as e:
+                print(str(e))
+            finally:
+                attempts += 1
 
-    def recalculate_potential_corners(self, room):
-        # CornerKey -> [widths, heights]
-        # result = dict()
-        print(f"recalculating corners for room {room.bounds}")
-        for tile in room.tiles:
-            if not tile.has_neighboring_walls(self.map):
-                print(f"processing tile {tile}")
-                left, right = self.map.calculate_room_widths(tile, room)
-                top, bottom = self.map.calculate_room_heights(tile, room)
-                self.save_cache(tile, left, right, top, bottom)
+        print('failed to place a room')
+        return None
 
-    def save_cache(self, tile, left, right, top, bottom):
-        self.corner_cache[CornerKey(tile.x, tile.y, CornerEnum.LT)] = \
-            Holder(widths=right, heights=bottom)
-
-        self.corner_cache[
-            CornerKey(tile.x, tile.y, CornerEnum.LB)] = \
-            Holder(widths=right, heights=top)
-
-        self.corner_cache[
-            CornerKey(tile.x, tile.y, CornerEnum.RT)] = \
-            Holder(widths=left, heights=bottom)
-
-        self.corner_cache[
-            CornerKey(tile.x, tile.y, CornerEnum.RB)] = \
-            Holder(widths=left, heights=top)
-
-    def get_wh(self, corner, left, right, top, bottom):
-        if corner == CornerEnum.LT:
-            return random.choice(right), random.choice(bottom)
-        if corner == CornerEnum.LB:
-            return random.choice(right), random.choice(top)
-        if corner == CornerEnum.RT:
-            return random.choice(left), random.choice(bottom)
-        if corner == CornerEnum.RB:
-            return random.choice(left), random.choice(top)
+    def pick_dimensions(self, corner, left, right, top, bottom, max_ratio=4,
+                        min_square=50, max_square=1000):
+        attempts = 0
+        while attempts < _MAX_ATTEMPTS:
+            if corner == CornerEnum.LT:
+                width, height = random.choice(right), random.choice(bottom)
+            elif corner == CornerEnum.LB:
+                width, height = random.choice(right), random.choice(top)
+            elif corner == CornerEnum.RT:
+                width, height = random.choice(left), random.choice(bottom)
+            else:
+                # RB
+                width, height = random.choice(left), random.choice(top)
+            if max(width / height, height / width) < max_ratio and \
+                    min_square < width * height < max_square:
+                return width, height
+            attempts += 1
+        raise KeyError("Unable to pick valid dimensions. Try a new tile")

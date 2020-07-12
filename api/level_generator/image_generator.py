@@ -3,6 +3,7 @@ from typing import List
 
 from PIL import Image, ImageDraw
 
+from api.level_generator.generator import Generator
 from api.level_generator.models import Room, Map
 
 TILE_SIZE_PX = 10
@@ -49,3 +50,9 @@ def _draw_tile(tile, idraw, outline=None, fill=None):
                   (tile.y + 1) * TILE_SIZE_PX]
     # print(f'rect {dimensions}')
     idraw.rectangle(dimensions, outline=outline, fill=fill)
+
+
+g = Generator(150, 150)
+rooms = g.generate(10)
+img = make_image(g.map, rooms)
+img.save('yay.png')

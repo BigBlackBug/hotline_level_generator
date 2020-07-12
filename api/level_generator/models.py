@@ -1,4 +1,5 @@
 from api.level_generator.geometry import Rect
+
 # from api.level_generator import image_generator as ig
 MIN_CORRIDOR_SIZE = 1
 
@@ -134,6 +135,10 @@ class Map:
             map.append(row)
         self.map = map
 
+    @property
+    def square(self):
+        return self.width * self.height
+
     def get(self, x, y):
         if x < 0 or x > self.width - 1 or y < 0 or y > self.height - 1:
             return None
@@ -163,7 +168,6 @@ class Map:
         # right
         widths2 = self._scan_h(origin, x_from=tile.x + 1, x_to=self.width,
                                room=room)
-        # print(f"for tile {tile} - {widths},{widths2}")
         return widths, widths2
 
     def calculate_room_heights(self, tile, room):
@@ -174,7 +178,6 @@ class Map:
         # bot
         heights2 = self._scan_v(origin, y_from=tile.y + 1, y_to=self.height,
                                 room=room)
-        # print(f"for tile {tile} - {heights},{heights2}")
         return heights, heights2
 
     def _scan_h(self, origin, x_from, x_to, room):
