@@ -1,13 +1,13 @@
+import random
 from typing import List
 
 from PIL import Image, ImageDraw
 
-from api.level_generator.generator import Generator
 from api.level_generator.models import Room, Map
 
 TILE_SIZE_PX = 10
 
-colors = ['orange', 'magenta', 'grey']
+colors = ['orange', 'magenta', 'grey', 'black']
 
 
 def _draw_mesh(idraw, width, height):
@@ -24,18 +24,20 @@ def make_image(map: Map, rooms: List[Room]):
     idraw = ImageDraw.Draw(img)
     _draw_mesh(idraw, img.width, img.height)
     for i, room in enumerate(rooms):
-        _draw_room(room, idraw, colors[i])
+        _draw_room(room, idraw)
     return img
 
 
-def _draw_room(room, idraw, color):
+def _draw_room(room, idraw):
+    color = (
+        random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
     for tile in room.tiles:
         # fill = 'red' if tile..potential_door else 'white'
         # print(f"wall {wall.tile.x, wall.tile.y}")
         _draw_tile(tile, idraw, fill=color)
     for wall in room.walls:
         outline = 'red' if wall.potential_door else 'white'
-        print(f"wall {wall.tile.x, wall.tile.y}")
+        # print(f"wall {wall.tile.x, wall.tile.y}")
         _draw_tile(wall.tile, idraw, outline=outline)
 
 

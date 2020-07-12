@@ -105,6 +105,18 @@ class Rect:
         """
         return [self.top, self.right, self.bottom, self.left]
 
+    @property
+    def width(self):
+        return self.top.end[0] - self.top.start[0]
+
+    @property
+    def height(self):
+        return self.left.end[1] - self.top.start[1]
+
+    @property
+    def origin(self):
+        return self.left.start[0], self.top.start[1]
+
     def __eq__(self, other):
         return self.top == other.top and self.right == other.right and \
                self.bottom == other.bottom and self.left == other.left
